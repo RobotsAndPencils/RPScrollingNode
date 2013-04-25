@@ -24,9 +24,11 @@
 
 #import "RPScrollingNode.h"
 
+#define kRPScrollingNodeRowTag 29876
+
 
 @implementation RPScrollingNode
-@synthesize minimumTouchLengthToSlide = minimumTouchLengthToSlide_;
+@synthesize nodes = nodes_;
 
 
 +(id) scrollingNodeWithNodes:(NSArray *)nodes height:(NSInteger)height
@@ -43,36 +45,12 @@
         self.isTouchEnabled = YES;
         self.isRelativeAnchorPoint = YES;
         
+        viewableHeight_ = height;
+        
         slidingNode_ = [CCNode node];
-        
-		
-        
-        CGSize size = CGSizeZero;
-        for (CCNode *node in nodes) {
-            size.width = (MAX([node contentSize].width, size.width));
-            size.height += [node contentSize].height;
-        }
-        
-        
-        [slidingNode_ setContentSize:size];
-        slidingNode_.anchorPoint = ccp(0.5f, 0.5f);
-        
-        [self setContentSize:CGSizeMake(size.width, height)];
-        
-        NSInteger nodeIndex = 0;
-        for (CCNode *node in nodes) {
-            
-            // top row = adjust + height * total node - node
-            
-            CGSize nodeSize = [node contentSize];
-            NSInteger nodeHeight = ([nodes count] - 1 - nodeIndex ) * nodeSize.height;
-            node.position = ccp(size.width * .5, nodeHeight + nodeSize.height * .5);
-            [slidingNode_ addChild:node];
-            nodeIndex++;
-        }
-        
-        slidingNode_.position = ccp(size.width * .5, height - ([slidingNode_ contentSize].height * .5));
         [self addChild:slidingNode_];
+        
+        self.nodes = nodes;
         
 
     }
@@ -81,14 +59,64 @@
 
 }
 
+- (void)loadNodes{
+    CGSize size = CGSizeZero;
+    for (CCNode *node in nodes_) {
+        size.width = (MAX([node contentSize].width, size.width));
+        size.height += [node contentSize].height;
+    }
+    
+    
+    [slidingNode_ setContentSize:size];
+    slidingNode_.anchorPoint = ccp(0.5f, 0.5f);
+    
+    [self setContentSize:CGSizeMake(size.width, viewableHeight_)];
+    
+    NSInteger nodeIndex = 0;
+    for (CCNode *node in nodes_) {
+
+        
+        CGSize nodeSize = [node contentSize];
+        NSInteger nodeHeight = ([nodes_ count] - 1 - nodeIndex ) * nodeSize.height;
+        node.position = ccp(size.width * .5, nodeHeight + nodeSize.height * .5);
+        node.tag = kRPScrollingNodeRowTag;
+        [slidingNode_ addChild:node];
+        nodeIndex++;
+    }
+    
+    slidingNode_.position = ccp(size.width * .5, viewableHeight_ - ([slidingNode_ contentSize].height * .5));
+
+}
+
 - (id)init
 {
     self = [self initWithNodes:nil height:0.0f];
     if (self) {
-
+        
     }
     return self;
 }
+
+
+- (void)setNodes:(NSArray *)nodes{
+    
+    [slidingNode_ removeAllChildrenWithCleanup:YES];
+    nodes_ = nodes;
+    [self loadNodes];
+    
+    // visual indicator of refresh
+    [self runSlideUpAnimation];
+    
+}
+
+- (void)runSlideUpAnimation{
+    CGPoint newPosition = ccpAdd(slidingNode_.position, ccp(0.0f, -viewableHeight_));
+    slidingNode_.position = newPosition;
+    [self bounceBackIfNeeded];
+}
+
+
+#pragma mark Touch Handling
 
 -(void) registerWithTouchDispatcher
 {
@@ -172,20 +200,14 @@
     CGPoint delta = ccpSub(point, prevPoint);
     
     curTouchLength_ += ccpLength( delta );
+
+    // cancel out sideways movement
+    delta.x = 0;
+
+    // can never let the top item go below the top of the content
+    CGPoint newPosition = ccpAdd(slidingNode_.position, delta );
+    slidingNode_.position = newPosition;
     
-    
-    if (curTouchLength_ >= self.minimumTouchLengthToSlide)
-    {
-
-        // cancel out sideways movement
-        delta.x = 0;
-
-        // can never let the top item go below the top of the content
-        CGPoint newPosition = ccpAdd(slidingNode_.position, delta );
-        slidingNode_.position = newPosition;
-        
-    }
-
 }
 
 -(void) ccTouchEnded:(UITouch *)touch withEvent:(UIEvent *)event

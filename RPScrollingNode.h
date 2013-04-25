@@ -29,14 +29,12 @@
     
     
 	CGFloat curTouchLength_;
-    
+    CGFloat viewableHeight_;
     
     CCNode  *slidingNode_;
 }
 
-
-/** Minimum length of touch, that will disable selected menu item & start scrolling. */
-@property(readwrite, assign) CGFloat minimumTouchLengthToSlide;
+@property (nonatomic, assign) NSArray *nodes;
 
 + (id) scrollingNodeWithNodes:(NSArray *)nodes height:(NSInteger)height;
 
