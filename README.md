@@ -4,9 +4,17 @@ RPScrollingNode
 Basic Use
 ------------
 ```Obj-C
+// Create a scrolling node with the array of nodes.  Make the visible view into the scroller the height specified.
 RPScrollingNode *scroller =[RPScrollingNode scrollingNodeWithNodes:nodes height:300];
+scroller.position = ccp(x, y);
 
+// update list
+scroller.nodes = myOtherNodeArray;
 ```
+
+Assumptions
+------------
+* The array of nodes have equal width.  That becomes the width of the scroller
 
 
 TODO
