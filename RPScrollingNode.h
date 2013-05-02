@@ -34,7 +34,7 @@
     CCNode  *slidingNode_;
 }
 
-@property (nonatomic, assign) NSArray *nodes;
+@property (nonatomic, retain) NSArray *nodes;
 
 + (id) scrollingNodeWithNodes:(NSArray *)nodes height:(NSInteger)height;
 

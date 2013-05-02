@@ -97,11 +97,16 @@
     return self;
 }
 
+- (void)dealloc {
+    [nodes_ release];
+    [super dealloc];
+}
 
 - (void)setNodes:(NSArray *)nodes{
     
     [slidingNode_ removeAllChildrenWithCleanup:YES];
-    nodes_ = nodes;
+    [nodes_ release];
+    nodes_ = [nodes retain];
     [self loadNodes];
     
     // visual indicator of refresh
@@ -172,9 +177,11 @@
 	
 	curTouchLength_ = 0; //< every new touch should reset previous touch length
 	
-
     CGPoint touchPoint = [touch locationInView:[touch view]];
 	touchPoint = [[CCDirector sharedDirector] convertToGL:touchPoint];
+    
+    // convert parent's node space
+    touchPoint = [super convertToNodeSpaceAR:touchPoint];
     
     if (!CGRectContainsPoint([self boundingBox], touchPoint)) {
         return NO;
@@ -233,7 +240,11 @@
     // clip outside bounding box
     glEnable(GL_SCISSOR_TEST);
     CGRect box = [self boundingBox];
-    glScissor(box.origin.x, box.origin.y, box.size.width, box.size.height);
+    
+    // convert bounding box to world space
+    CGPoint worldSpaceOrigin = [self convertToWorldSpaceAR:box.origin];
+    glScissor(worldSpaceOrigin.x, worldSpaceOrigin.y, box.size.width, box.size.height);
+    
     [super visit];
     glDisable(GL_SCISSOR_TEST);
 }
