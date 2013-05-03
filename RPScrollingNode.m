@@ -181,7 +181,7 @@
 	touchPoint = [[CCDirector sharedDirector] convertToGL:touchPoint];
     
     // convert parent's node space
-    touchPoint = [super convertToNodeSpaceAR:touchPoint];
+    touchPoint = [self.parent convertToNodeSpace:touchPoint];
     
     if (!CGRectContainsPoint([self boundingBox], touchPoint)) {
         return NO;
@@ -242,7 +242,7 @@
     CGRect box = [self boundingBox];
     
     // convert bounding box to world space
-    CGPoint worldSpaceOrigin = [self convertToWorldSpaceAR:box.origin];
+    CGPoint worldSpaceOrigin = [self.parent convertToWorldSpace:box.origin];
     glScissor(worldSpaceOrigin.x, worldSpaceOrigin.y, box.size.width, box.size.height);
     
     [super visit];
