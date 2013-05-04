@@ -239,11 +239,17 @@
     
     // clip outside bounding box
     glEnable(GL_SCISSOR_TEST);
+    
     CGRect box = [self boundingBox];
     
     // convert bounding box to world space
     CGPoint worldSpaceOrigin = [self.parent convertToWorldSpace:box.origin];
-    glScissor(worldSpaceOrigin.x, worldSpaceOrigin.y, box.size.width, box.size.height);
+    CGRect scissorRect = CGRectMake(worldSpaceOrigin.x, worldSpaceOrigin.y, box.size.width, box.size.height);
+    
+    // convert to pixel space 
+    scissorRect = CC_RECT_POINTS_TO_PIXELS(scissorRect);
+    
+	glScissor(scissorRect.origin.x, scissorRect.origin.y, scissorRect.size.width, scissorRect.size.height);
     
     [super visit];
     glDisable(GL_SCISSOR_TEST);
