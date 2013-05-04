@@ -127,8 +127,8 @@
 {
     CCTouchDispatcher *dispatcher = [CCTouchDispatcher sharedDispatcher];
 
-    
-	[dispatcher addTargetedDelegate: self priority:0 swallowsTouches: YES ];
+    // make we have touch priority over any CCMenu and don't swallow touches
+	[dispatcher addTargetedDelegate: self priority:kCCMenuTouchPriority-1 swallowsTouches:NO];
 }
 
 
@@ -197,7 +197,6 @@
 
 -(void) ccTouchMoved:(UITouch *)touch withEvent:(UIEvent *)event
 {
-
     
     // get touch move delta
     CGPoint point = [touch locationInView: [touch view]];
