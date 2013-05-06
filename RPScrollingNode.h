@@ -35,6 +35,7 @@
 }
 
 @property (nonatomic, retain) NSArray *nodes;
+@property (nonatomic) BOOL isEnabled;
 
 + (id) scrollingNodeWithNodes:(NSArray *)nodes height:(NSInteger)height;
 
