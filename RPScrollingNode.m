@@ -29,7 +29,7 @@
 
 @implementation RPScrollingNode
 @synthesize nodes = nodes_;
-
+@synthesize isEnabled = isEnabled_; 
 
 +(id) scrollingNodeWithNodes:(NSArray *)nodes height:(NSInteger)height
 {
@@ -51,7 +51,7 @@
         [self addChild:slidingNode_];
         
         self.nodes = nodes;
-        
+        self.isEnabled = YES; 
 
     }
     
@@ -170,7 +170,9 @@
 
 
 -(BOOL) ccTouchBegan:(UITouch *)touch withEvent:(UIEvent *)event
-{
+{    
+    if (!isEnabled_)
+        return NO;
     
 	if( !visible_  )
 		return NO;
