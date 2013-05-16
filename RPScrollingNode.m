@@ -26,10 +26,27 @@
 
 #define kRPScrollingNodeRowTag 29876
 
+typedef enum {
+    kRPScrollStateTouched = 0,
+    kRPScrollStateScrolling,
+    kRPScrollStateEnding,
+} RPScrollState;
+
+@interface RPScrollingNode () {
+}
+
+@property (nonatomic) RPScrollState scrollState;
+@property (nonatomic) CGPoint touchBeganPos;
+
+@end
 
 @implementation RPScrollingNode
 @synthesize nodes = nodes_;
 @synthesize isEnabled = isEnabled_; 
+@synthesize minVerticalScrollDistance = _minVerticalScrollDistance;
+@synthesize scrollState = _scrollState;
+@synthesize touchBeganPos = _touchBeganPos;
+@synthesize delegate = _delegate; 
 
 +(id) scrollingNodeWithNodes:(NSArray *)nodes height:(NSInteger)height
 {
@@ -53,6 +70,9 @@
         self.nodes = nodes;
         self.isEnabled = YES; 
 
+        // default min distance moved before scrolling
+        self.minVerticalScrollDistance = 15.0;
+        
     }
     
     return self;
@@ -73,9 +93,7 @@
     [self setContentSize:CGSizeMake(size.width, viewableHeight_)];
     
     NSInteger nodeIndex = 0;
-    for (CCNode *node in nodes_) {
-
-        
+    for (CCNode *node in nodes_) {        
         CGSize nodeSize = [node contentSize];
         NSInteger nodeHeight = ([nodes_ count] - 1 - nodeIndex ) * nodeSize.height;
         node.position = ccp(size.width * .5, nodeHeight + nodeSize.height * .5);
@@ -182,6 +200,9 @@
     CGPoint touchPoint = [touch locationInView:[touch view]];
 	touchPoint = [[CCDirector sharedDirector] convertToGL:touchPoint];
     
+    // save the touch position before converting to node space
+    self.touchBeganPos = touchPoint;
+    
     // convert parent's node space
     touchPoint = [self.parent convertToNodeSpace:touchPoint];
     
@@ -191,6 +212,10 @@
 	
 	// start slide even if touch began outside of menuitems, but inside menu rect
 	if ([self isTouchForMe: touch] ){
+        self.scrollState = kRPScrollStateTouched;
+        if ([self.delegate respondsToSelector:@selector(rpScrollLayerTouchBegan:)]){
+            [self.delegate rpScrollLayerTouchBegan:self];
+        }
 		return YES;
 	}
 	
@@ -199,11 +224,26 @@
 
 -(void) ccTouchMoved:(UITouch *)touch withEvent:(UIEvent *)event
 {
-    
     // get touch move delta
     CGPoint point = [touch locationInView: [touch view]];
-    CGPoint prevPoint = [ touch previousLocationInView: [touch view] ];
     point =  [ [CCDirector sharedDirector] convertToGL: point ];
+ 
+    if (self.scrollState == kRPScrollStateTouched) {
+        CGPoint testDelta = ccpSub(point, self.touchBeganPos);
+        
+        // check to see if changes in total distance is greater then min distance to scroll
+        if (ccpLength(testDelta) > self.minVerticalScrollDistance){
+            self.scrollState = kRPScrollStateScrolling;
+            if ([self.delegate respondsToSelector:@selector(rpScrollLayerScrollingStarted:)]){
+                [self.delegate rpScrollLayerScrollingStarted:self];
+            }
+        }
+        else {
+            return;
+        }
+    }
+    
+    CGPoint prevPoint = [touch previousLocationInView:[touch view]];
     prevPoint =  [ [CCDirector sharedDirector] convertToGL: prevPoint ];
     CGPoint delta = ccpSub(point, prevPoint);
     
@@ -220,16 +260,20 @@
 
 -(void) ccTouchEnded:(UITouch *)touch withEvent:(UIEvent *)event
 {
-	
     [self bounceBackIfNeeded];
-	
+    self.scrollState = kRPScrollStateEnding;
+    if ([self.delegate respondsToSelector:@selector(rpScrollLayerTouchEnded:)]){
+        [self.delegate rpScrollLayerTouchEnded:self];
+    }
 }
 
 -(void) ccTouchCancelled:(UITouch *)touch withEvent:(UIEvent *)event
 {
-    
     [self bounceBackIfNeeded];
-	
+    self.scrollState = kRPScrollStateEnding;
+    if ([self.delegate respondsToSelector:@selector(rpScrollLayerTouchCancelled:)]){
+        [self.delegate rpScrollLayerTouchCancelled:self];
+    }    
 }
 
 - (void) visit

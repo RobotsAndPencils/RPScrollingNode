@@ -25,9 +25,18 @@
 #import <Foundation/Foundation.h>
 #import "cocos2d.h"
 
+@class RPScrollingNode;
+
+@protocol RPScrollLayerDelegate
+@optional
+- (void) rpScrollLayerScrollingStarted:(RPScrollingNode *) sender;
+- (void) rpScrollLayerTouchBegan:(RPScrollingNode *) sender;
+- (void) rpScrollLayerTouchEnded:(RPScrollingNode *) sender;
+- (void) rpScrollLayerTouchCancelled:(RPScrollingNode *) sender;
+@end
+
 @interface RPScrollingNode : CCLayer <CCTargetedTouchDelegate> {
-    
-    
+        
 	CGFloat curTouchLength_;
     CGFloat viewableHeight_;
     
@@ -36,6 +45,11 @@
 
 @property (nonatomic, retain) NSArray *nodes;
 @property (nonatomic) BOOL isEnabled;
+
+// min distance moved before scrolling
+@property (nonatomic) GLfloat minVerticalScrollDistance;
+@property (nonatomic, assign) NSObject <RPScrollLayerDelegate> *delegate;
+
 
 + (id) scrollingNodeWithNodes:(NSArray *)nodes height:(NSInteger)height;
 
